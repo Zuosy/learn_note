@@ -1,5 +1,7 @@
 # cmake的Hello World
 
+## 没有引言
+
 ### 先编写一个`main.c`文件
 
 ```c
