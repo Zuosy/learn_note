@@ -1,8 +1,8 @@
 # 更好一点的Hello World
 
-* 为工程添加一个子目录`src`,放置源代码
-* 使用外部构建(out-of-source)
-* 安装可执行文件,头文件,文档(没有)
+i 为工程添加一个子目录`src`,放置源代码
+ii 使用外部构建(out-of-source)
+iii 安装可执行文件,头文件,文档(没有)
 
 ---
 ![tree](./picture/tree.png)
