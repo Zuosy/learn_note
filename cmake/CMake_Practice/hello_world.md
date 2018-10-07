@@ -80,7 +80,7 @@ drwxr-xr-x 5 zuoshiyu zuoshiyu 4.0K 9月  28 10:36 CMakeFiles
 Hello World from t1 Main!
 ```
 
-===
+___
 
 ## 简单的解释
 
@@ -91,9 +91,9 @@ Hello World from t1 Main!
     PROJECT(projectname [CXX] [C] [Java])
 
 这个命令用于定义工程名称,并可指定工程支持的语言,支持的语言列表是可以忽略的,默认情况表示支持所有语言.
-这个命令隐式定义了连个cmake变量
+这个命令隐式定义了两个cmake变量
 
-    `<projectname>_BINARY_DIR` 以及 `<projectname>_SOURCE_DIR`
+    <projectname>_BINARY_DIR && <projectname>_SOURCE_DIR
 
 >在这里就是`HELLO_BINARY_DIR`和`HELLO_SOURCE_DIR`,当然两者可以指定不同.
 
