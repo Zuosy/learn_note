@@ -1,0 +1,2 @@
+/home/zuoshiyu/workspace/learn_note/cmake/CMake_Practice/cmake_variables/variable/build/CMakeFiles/rebuild_cache.dir
+/home/zuoshiyu/workspace/learn_note/cmake/CMake_Practice/cmake_variables/variable/build/CMakeFiles/edit_cache.dir
