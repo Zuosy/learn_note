@@ -186,9 +186,151 @@ int main(int, char **)
     const int &r = ci; // low 第三种情况
 ```
 
-当执行对象的拷贝操作时,常量是顶层const还是底层const区别明显.其中,顶层const不收什么影响.
+当执行对象的拷贝操作时,常量是顶层const还是底层const区别明显.其中,顶层const不受什么影响.
 
 ```cpp
     i = ci; // 没毛病 不受影响,看到了没?
     p2 = p3; // p3 是顶层const
+```
+
+底层const的限制不能忽视.当执行对象的拷贝操作时,拷如和拷出的对象必须具有相同的底层const.
+
+```cpp
+    int *p = p3; // error
+    p2 = p3;
+    p2 = &i;
+    int &r = ci; // error
+    const int &r2 = i;
+```
+
+## 常量表达式和constexpr
+
+**常量表达式**(const expression)是指值不会改变并且在编译过程就能得到计算结果的表达式.
+
+### constexpr变量
+
+```cpp
+    constexpr int mf = 20;
+    constexpr int limit = mf + 1;
+    constexpr int sz = size(); // error
+```
+
+### 指针和constexpr
+
+如果constexpr声明定义了一个指针,限定符constexpr仅对指针有效,与指针所指的对象无效.
+
+```cpp
+    const int *p = nullptr;
+    constexpr int *p = nullptr;
+```
+
+> p是一个指向常量的指针,而q是一个常量指针,其中的关键在于constexpr把他所定义的对象置为了顶层const.
+
+```cpp
+    constexpr int *np = nullptr; // top-level const
+    int j = 0;
+    constexpr int i = 42;
+    constexpr const int *p = &i; // 我特么...
+    constexpr int *p1 = &j; // 常量指针可以指向非常量对象
+```
+
+## 类型别名
+
+传统方法
+
+```cpp
+    typedef double wages;
+    typedef wages base, *p; // base is double; p is double pointer.
+```
+
+新标准
+
+```cpp
+    using SI = Sales_item;
+    using Integer = int;
+    using Int_Pointer = int *;
+```
+
+### **指针,常量和类别名**
+
+```cpp
+    typedef char *pstring;
+    const pstring cstr = nullptr; // char *const cstr = nullptr; const修饰的是对象本身,对象本身是个指针类型啊!!!
+    const pstring *ps; // char *const* ps;
+```
+
+### auto类型说明符
+
+auto让编译器通过初始值来推算变量的类型.显然auto定义的变量必须有初始值.(如果没有初始值,那编译器分析个鸡脖呀)
+
+如果用一条的auto语句声明多个变量时,那他们的基本数据类型必须一致.
+
+#### 复合类型,常量和auto
+
+* 当**引用**被当作auto的初始值时,真正参与初始化的其实是引用对象的值.此时编译器以引用的对象的类型作为auto的类型.
+
+```cpp
+    int i = 0, &r = i;
+    auto a = r; // a is int not int &.
+```
+
+* auto一般会忽略掉顶层const,同时底层const则会保留下来,比如初始值是一个指向常量的指针时.
+
+```cpp
+    const int ci = i, &cr = ci; // ci is top-level cr is low-level
+    auto b = ci; // int b = ci;
+    auto c = cr; // int c = cr; cr just is the ci;
+    auto d = &i; // int *d = &i;
+    auto e = &ci; // const int *e = &ci;
+```
+
+如果希望auto类型是一个顶层const,需要明确指出:
+
+```cpp
+    const auto f = ci;
+```
+
+还可以将引用的类型设为auto:
+
+```cpp
+    auto &g = ci;
+    auto &h = 42; // error int &h = 42; you must be joke me.
+    const auto &j = 42;
+```
+
+> 设置一个类型为auto的**引用**时,初始值中的顶层常量属性仍然保留.如果我们给初始值绑定一个引用,此时常量就不是顶层const了.
+
+```cpp
+    const int number = 2345;
+    const int &ref_number = number;
+    auto &ref = ref_number; // 但是底层const还在,ref是一个const int &;
+```
+
+>> 要在一条语句中定义多个变量时,切记,符号&和*只从属于某个声明符,而非基本数据类型的一部分,因此初始值必须是同一种类型.
+
+```cpp
+    auto k = ci, &l = i; // int
+    auto &m = ci, *p = &ci; // const int &m = ci, *p = &ci;
+    auto &n = i, *p2 = &ci; // i is int *p2 is const int;
+```
+
+第二个例子:
+
+```cpp
+    constexpr int ci = 2 << 9;
+    const int &ref = ci, *poi = &ci;
+    cout << ref << ", " << *poi << endl;
+    cout << &ref << ", " << poi << endl;
+```
+
+经典练习题:
+
+```cpp
+    const int i = 32;
+    auto j = i; // int j = i; 可以忽略的顶层const;
+    const auto &k =i; //引用不是对象,引用肯定是low-level; const int &k =i;
+    auto *p = &i; // i 是一个const int; &i 就可以是const int *p = &i;
+    const auto j2 = i, &k2 = i; // 这个很牛逼,很容易看出来是const int; But,左边是顶层const, 右边是底层const;
+    // const int j2 = i;
+    // const int &k2 = i;
 ```
