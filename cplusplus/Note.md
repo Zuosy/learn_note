@@ -334,3 +334,100 @@ auto让编译器通过初始值来推算变量的类型.显然auto定义的变�
     // const int j2 = i;
     // const int &k2 = i;
 ```
+
+## decltype类型指示符
+
+> 有时候会遇到这种情况:希望从表达式的类型推断出要定义的变量的类型,但是不想用该表达式的值初始化变量.
+
+decltype(expr) 编译器分析表达式并得到它的类型,却不实际计算表达式的值.
+
+```cpp
+    decltype(fun()) sum = x;
+    // 编译器在编译阶段分析函数fun的返回类型,而不实际调用.
+```
+
+### decltype and const
+
+decltype处理**顶层const和引用**的方式与auto不同,如果decltype使用的表达式是一个**变量**,则decltype返回**该变量的类型**(包括顶层const和引用在内).
+
+```cpp
+    const int ci = 0, &cj = ci;
+    decltype(ci) x = 0; // const int
+    decltype(cj) y = x; // const int &;
+    decltype(cj) z; // error
+```
+
+mycode
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int main(int, char **)
+{
+    const int ci = 0, &cj = ci;
+    decltype(ci) x = 1234; // const int x = 1234;
+    cout << "x = " << x << endl;
+
+    decltype(cj) y = x; // const int &y = x;
+    cout << "y = " << y << endl;
+
+    cout << "\npointer : \n";
+    int number = 1234;
+    int *ptr_number = &number;
+    decltype(ptr_number) _; // int *_ = &number;
+    _ = &number;
+    cout << "number = " << *_ << endl;
+
+    int *const cprt_number = &number;
+    decltype(cprt_number) __ = &number; // int *const __ = &number;
+    *__ = 2345;
+    cout << "number = " << *__ << endl;
+    // 对于变量,返回该变量的类型.
+    return 0;
+}
+```
+
+* **NOTE**: 引用从来都作为其所指对象的同义词出现,只有在decltype处是一个例外.
+
+### decltype和引用
+
+一般来说表达式结果对象能作为一条赋值语句的左值时,decltype将返回一个引用类型.
+
+```cpp
+    int i = 42, *p = &i, &r = i;
+    decltype(r + 0) b; // int b; r + 0 is not l-value
+    decltype(*p) c; // error c is int &; *p is a l-value;
+```
+
+* **暂时这么记**:如果一个表达式得到的对象我们可以获取她的地址,那么她是一个左值.
+
+decltype和auto的另一处重要区别是,decltype的结果类型与表达式形式密切相关.有一种情况需要特别注意:对于decltype所用的表达式,如果变量名加上了一对**括号**,则得到的类型与不加括号时会有不同.如果decltype使用的是一个**不加括号**的变量,则得到的结果就是**该变量的类型**;如果给变量加上了一层或多层括号,编译器就会把她当成是一个表达式,即decltype就会得到**引用类型**.
+
+```cpp
+    decltype((i)) d; // error d is a reference,without init.
+    decltype(i) e;
+```
+
+* **最后亿个**:赋值会产生引用的一类典型表达式，引用的类型就是左值的类型．也就是说，如果i是int，则表达式`i = x`的类型是一个`int &`.
+
+    decltype(i = x) num = y; // int &num = y;
+
+## 写个头文件的例子吧
+
+```cpp
+// student.h
+#ifndef STUDENT_H
+#define STUDENT_H
+
+struct student
+{
+    char name[40];
+    int age;
+};
+
+// ....
+
+#endif // STUDENT_H
+```
