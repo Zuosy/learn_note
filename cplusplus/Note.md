@@ -221,7 +221,7 @@ int main(int, char **)
 
 ```cpp
     const int *p = nullptr;
-    constexpr int *p = nullptr;
+    constexpr int *q = nullptr; // 然而只能指向nullptr,然并卵
 ```
 
 > p是一个指向常量的指针,而q是一个常量指针,其中的关键在于constexpr把他所定义的对象置为了顶层const.
@@ -230,6 +230,7 @@ int main(int, char **)
     constexpr int *np = nullptr; // top-level const
     int j = 0;
     constexpr int i = 42;
+    // 下面这两个都不行,因为他们不是编译极端有值的表达式
     constexpr const int *p = &i; // 我特么...
     constexpr int *p1 = &j; // 常量指针可以指向非常量对象
 ```
