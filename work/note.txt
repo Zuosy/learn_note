@@ -1,0 +1,36 @@
+VR_ReceiverCb.cpp
+    处理UI,NAVI,MEDIA,以及自己发送的回调.
+    比如,OnRecvBack为例,
+    然后调用到VR_Platform 里面的OnReqCancel方法
+    然后调用到VR_SDSListenerUI 里面的OnBack方法.
+
+VR_SDSListenerUI.cpp
+    OnBack方法
+    在这个方法里面创建了一个事件对象,将回调的参数封装到事件对象里面;
+    然后通过VR_SDSController将事件抛到XML状态机里面去.(继续这个)
+
+VR_SDSController.cpp
+    事件对象跑到了,PostRequest函数中,
+    压入到m_cEventList事件队列中.
+    等待着Run()函数调用
+    然后调用到m_spSDSStateMachine的OnEvent方法
+    m_spSDSStateMachine是VR_SDSStateMachine的实例
+    VR_SDSStateMachine是CStateMachine的派生
+
+CStateMachine.cpp
+    然而,OnEvent里面是    return (NULL != m_pcState) ? m_pcState->OnEvent(rEvent) : false;
+    m_pcState->OnEvent(rEvent) 调用的是
+    VR_SDSStateLocal.cpp 里面的OnEvent方法.
+
+VR_SDSStateLocal.cpp
+    事件对象传到了VR_SDSHandel对象里面,执行OnHandle方法.
+    VR_SDSStateLocal 有一个m_cHandleMap 成员<HandleType(std::string), VR_SDSHandle*> 这个成员在
+    VR_SDSStateLocalManager中被赋值
+
+VR_SDSHandle.cpp
+    然后执行了OnHandle方法
+    然后里面有个OnCheck方法把VR_SDSStateLoca 和 VR_SDSEvent对象传递到VR_SDSCHeckBase(一个有很多崽儿的基类)对象里面
+
+VR_SDSCheckBase.cpp
+VR_SDSCheckSessionValid.cpp
+    根据log好像执行到了这里
