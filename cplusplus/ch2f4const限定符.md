@@ -219,3 +219,4 @@ const double pi = 3.14159;
 const double *const pip = &pi;		// 常量的常量指针
 ```
 
+## 顶层const
