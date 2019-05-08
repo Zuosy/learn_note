@@ -220,3 +220,42 @@ const double *const pip = &pi;		// 常量的常量指针
 ```
 
 ## 顶层const
+指针本身是不是常量以及指针所指的是不是一个常量是两个相互独立的问题。**顶层const**(top-level const)标志指针本身是一个常量；**底层const**(low-level const)表示指针所指的对象是一个常量。
+
+```cpp
+int i = 0;
+int *const p1 = &i;		// top-level const
+const int ci = 42;		// top-level const
+const int *p2 = &ci;	// low-level const
+const int *const p3 = p2;	// low-level const left; top-level const right
+const int &r = ci;		// low-level const because of reference
+```
+
+当执行对象的拷贝操作时，常量是顶层const还是底层const区别明显。其中，顶层const不受什么影响。底层const的限制却不能忽视。
+
+当执行对象的拷贝操作时，拷入和拷出的对象必须具有相同的底层const资格；或者两个对象的数据类型必须能够转换。一般来说，非常量可以转换成常量，反之则不行：
+
+```cpp
+int *p = p3;		// const int *const p3 = p2;
+p2 = p3;
+p2 = &i;
+int &r = ci;		// const int ci = 42;
+const int &r2 = i;
+```
+
+## constexpr和常量表达式
+
+**常量表达式**(const expression)是指值不会改变并且在编译过程就能得到计算结果的表达式。
+
+字面值属于常量表达式。C++语言中有集中情况下是要用到常量表达式的。
+
+```cpp
+const int max_files = 20;	// 是
+const int limit = max_files + 1;	// 是
+int staff_size = 27;		// 不是
+const int sz = get_size();	// 不是
+```
+
+> 指针和constexpr的内容过于复杂在《C++ Primer》第59～60页。
+>
+> `constexpr`其实没啥太大用处。
