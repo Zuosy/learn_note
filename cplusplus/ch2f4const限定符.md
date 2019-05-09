@@ -259,3 +259,114 @@ const int sz = get_size();	// 不是
 > 指针和constexpr的内容过于复杂在《C++ Primer》第59～60页。
 >
 > `constexpr`其实没啥太大用处。
+
+------
+
+
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int aConst()
+{
+    return 1024;
+}
+
+constexpr int aConstexpr()
+{
+    return 2048;
+}
+
+int main(int, char **)
+{
+    const int aNum = aConst();
+    cout << aNum << endl;
+
+    constexpr int anNumm = aConstexpr();
+    cout << anNumm << endl;
+
+    return 0;
+}
+```
+
+> 对于上面的代码，`aConst`函数并不会编译时优化，而`aConstexpr`函数会在编译时尽可能的优化。换句话说17行是运行时初始化，20行是编译时初始化。20行更省时间和空间，`constexpr`还是有点用处的。
+
+### 指针和constexpr
+
+> Note(有点重要):在`constexpr`声明中如果定义了一个指针，限定符`constexpr`仅对指针有效，与指针所指的对象无关。
+
+
+
+```cpp
+const int *p = nullptr;		// 指向整数常量的指针
+constexpr int *q = nullptr;	// 指向整数的常量指针
+```
+
+constexpr把它所定义的对象置为顶层const
+
+尽管指针和引用都能定义成`constexpr`，但它们的初始值却收到严格限制。一个`constexpr`指针的初始值必须是`nullptr`或者`0`，或者是存储于某个固定地址中的对象。
+
+存储于某个固定地址的对象：比如一个不在函数中声明定义的对象。
+
+j 和i拥有代码段中的相对地址。
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int j = 0;
+constexpr int i = 42;
+
+int main(int, char **)
+{
+    constexpr int *np = nullptr;
+    constexpr const int *p = &i;
+    constexpr int *p1 = &j;
+
+    if (not np) {
+        cout << "p = " << p << endl;
+        cout << "*p = " << *p << endl;
+        cout << "p1 = " << p1 << endl;
+        cout << "*p1 = " << *p1 << endl;
+    }
+
+    return 0;
+}
+```
+
+这么说静态变量也可以了。
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+void fun()
+{
+    static int counter = 0;
+    ++counter;
+    constexpr int *pointer = &counter;
+    cout << "No. " << *pointer << " call fun()." << endl;
+}
+
+int main(int, char **)
+{
+    for (int i = 0; i < 5; ++i) {
+        fun();
+    }
+
+    return 0;
+}
+```
+
+```c
+No. 1 call fun().
+No. 2 call fun().
+No. 3 call fun().
+No. 4 call fun().
+No. 5 call fun().
+```
+
