@@ -2,13 +2,38 @@
 
 [TOC]
 
-## 模拟器环境
+## ~~模拟器环境~~
+
+> 这一节的手顺也许有用
 
 根据`819b_java_UT.docx`文件配置好模拟器环境，成功编译模拟器。
 
 然后启动模拟器(第一次初始化时间久一些)
 
 启动模拟器后，进入adb，`service list`列出100+个service证明模拟器已完全启动。
+
+## 模拟器环境配置
+
+> 最新的方法
+>
+> 我也不知道为什么非要用docker环境，我觉得可能是CI担当写的手顺，他们在服务器上跑UT，所以用到docker环境
+
+### 拉取代码
+
+```
+1.1 repo init -u ssh://172.26.14.22:29418/tamago/platform/manifest -b tamago/master -m lxc.xml
+1.2 repo sync -c --no-tags
+1.3 repo start mybranch --all (mybranch可根据自己习惯设置)
+1.4 进入docker环境。
+1.5 （docker环境）cd device/pioneer/packages/jupitui/Apks 路径下 执行 "git lfs pull origin" 来更新预置的apk。
+1.6 （docker环境）source build/envsetup.sh
+1.7 （docker环境）lunch (lunch 选项选 "lxc_x86_64-userdebug")
+1.8 （docker环境）make update-api -j4
+1.9 （docker环境）make -j4
+1.10（docker环境）编译成功之后 执行 "lxc session-manager-start" 来编译 session-manager,如果执行过程中最后出现 "Failed to creat sockets" 可忽略。
+```
+
+
 
 ## 手动测试
 
@@ -22,6 +47,8 @@
 4. coverage.ec文件
 
 ### 启动模拟器
+
+> 如果用docker环境编译模拟器，启动模拟器要推出docker环境，启动失败需要更改protobug和boost版本 [传送门](#lxc_start_fail)
 
 `lxc start`
 
@@ -89,6 +116,11 @@ altest.sh`
 
 
 ### 更改的配置文件`819b.conf`
+
+> 819b.conf文件路径：/home/zuoshiyu/workspace/myproject/venv/lib/python2.7/site-packages/Suntest-3.8.5-py2.7.egg/suntest/config/819b.co
+> nf
+>
+> 注意b的大小写
 
 文本对比如下
 
@@ -185,6 +217,44 @@ suntest -p 819b -c /home/zuoshiyu/workspace/emulator/819B_ut/device/pioneer/fram
 添加`LOCAL_DEX_PREOPT := false`
 
 
+
+### <span id="lxc_start_fail">lxc start失败</span>
+
+如果使用docker环境编译的模拟器，可能遇到模拟器启动失败的问题。
+
+需要确认protobuf和boost库的版本，可能需要降级安装。
+
+```
+安装protobuf2.6.1（如果docker中用的protobuf版本为2.6.1，和主机中的版本不同，必须安装）
+A.
+git clone https://github.com/govfl/probuffer-2.6.1
+cd probuffer-2.6.1/
+tar -zxvf protobuf-2.6.1.tar.gz
+sudo apt-get install build-essential
+cd protobuf-2.6.1/
+./configure
+make
+sudo make install 
+B.在/etc/ld.so.conf.d/目录下创建文件bprotobuf.conf文件,文件内容如下
+/usr/local/lib 
+C.sudo ldconfig
+protoc --version #可看到版本号为2.6.1
+```
+
+```
+安装boost1.58.0（如果docker中用的boost版本为1.58.0，和主机中的版本不同，必须安装）
+A.
+wget -O boost_1_58_0.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2/download
+tar --bzip2 -xvf boost_1_58_0.tar.bz2 
+cd boost_1_58_0 
+./bootstrap.sh
+./b2
+sudo ./b2 install
+B.在/etc/ld.so.conf的最后一行 写入  
+/usr/local/lib
+```
+
+
 ## 情报
 
 ### Demo
@@ -248,3 +318,73 @@ IBM 的java教程:[Java编程入门](https://www.ibm.com/developerworks/cn/java/
 [github wiki](https://github.com/powermock/powermock/wiki)
 
 ## 加油(ง •̀_•́)ง，你可以的！
+
+
+
+---
+
+华丽的分割线
+
+---
+
+
+
+## ~~Android java动态jar包单体测试~~
+
+> 注意：以VASetting为例，动态jar包需要编译到模拟器中去。
+
+### docker编译模拟器
+
+* 进入docker环境
+
+```txt
+docker pull iregistry.iauto.com/ci_members/iautoandroid-container/psetandroid/fullenv:latest
+
+docker run -it --tmpfs /tmp:exec --entrypoint /bin/bash --rm -w $HOME -v $HOME:$HOME -e HOME=$HOME -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group --device /dev/kvm -e DISPLAY=${DISPLAY} -e USER=$(whoami)  -v /tmp/.X11-unix:/tmp/.X11-unix -u $(id -u ${USER}):$(id -g ${USER}) --dns=192.168.2.14  --device /dev/fuse --ulimit nofile=40960 --privileged iregistry.iauto.com/ci_members/iautoandroid-container/psetandroid/fullenv:latest
+```
+
+1. `repo init -u ssh://172.26.14.22:29418/tamago/platform/manifest -b tamago/master -m lxc.xml`
+
+2. `repo sync -c --no-tags`
+
+3. `repo start tamago/master --all`
+
+4. `cd device/pioneer/packages/jupitui/Apks`路径下执行`git lfs pull origin`
+
+5. `source build/envsetup.sh`
+
+6. `lunch lxc_x86_64-userdebug`
+
+7. `make update-api`
+
+8. `make`
+
+9. 编译成功之后，执行`lxc session-manager-start`来编译`session-manager`
+
+    ---
+
+10. 推出docker环境`lxc start`开始使用模拟器，如果模拟器启动失败，请查看`lxc start`专题
+
+### 动态jar包的环境在模拟器中
+
+
+
+`EMMA_INSTRUMENT=true EMMA_INSTRUMENT_STATIC=true make VASettingTest -j
+8`
+
+`adb shell am instrument -w -r -e coverage true jp.pioneer.ceam.VASetting.test/android.support.test.runner.AndroidJUnitRunner`
+
+`java -jar prebuilts/sdk/tools/jack-jacoco-reporter.jar --coverage-file ./zuozuo/coverage.ec --metadata-file ./out/target/common/obj/JAVA_LIBRARIES/jp.pioneer.ceam.VASetting_intermediates/coverage.em --report-dir ./zuozuo  --source-dir device/pioneer/frameworks/VoiceServer/VASetting `
+
+`./target/common/obj/JAVA_LIBRARIES/jp.pioneer.ceam.VASetting_intermediates/coverage.em`
+
+
+
+`java -jar prebuilts/sdk/tools/jack-jacoco-reporter.jar --metadata-file ./coverage/coverage.em --coverage-file ./coverage/coverage.ec --report-dir ./zuozuo --source-dir ./device/pioneer/frameworks/VoiceServer/VASetting/ 
+Created report at ./zuozuo`
+
+
+
+## 结语
+
+你已经是一位出色的程序员了，现在去喝一杯Java吧。
